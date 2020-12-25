@@ -17,14 +17,14 @@ class EncoderStackDiscriminator(Discriminator):
 
     def forward(self, src):
         out = self.encoder_stack(src)
-        out = self.linear(out)
         out = torch.mean(out, dim=0, keepdim=False)
+        out = self.linear(out)
         out = func.softmax(out, 1)
         return out
 
 
 if __name__ == '__main__':
-    enc = EncoderStackDiscriminator(d_model=8)
-    noise = torch.randn((2, 1, 8))
+    enc = EncoderStackDiscriminator(d_model=128)
+    noise = torch.randn((2, 4, 128))
     result = enc(noise)
     print(result)
