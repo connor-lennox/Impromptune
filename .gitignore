@@ -209,3 +209,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Don't commit datasets
+Data/lpd_cleaned/*
