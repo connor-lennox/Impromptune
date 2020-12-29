@@ -36,21 +36,6 @@ def train_gan(training_data: torch.Tensor,
             # using the newly generated data and a batch from the training data. This process will
             # train both the generator and the discriminator together.
 
-            # Generator pass
-            generator_optimizer.zero_grad()
-
-            # Create noise for an input
-            input_noise = torch.rand(noise_size)
-
-            # Generate sequences and classify through discriminator
-            generated_sequences = generator(input_noise)
-            classifications = discriminator(generated_sequences)
-
-            # Calculate loss and step parameters
-            generator_loss = criterion(classifications, real_tensor)
-            generator_loss.backward()
-            generator_optimizer.step()
-
             # Discriminator pass
             discriminator_optimizer.zero_grad()
 
@@ -67,3 +52,21 @@ def train_gan(training_data: torch.Tensor,
             discriminator_loss = criterion(classifications, discriminator_train_labels)
             discriminator_loss.backward()
             discriminator_optimizer.step()
+
+            # Generator steps happen every five steps of the discriminator, as per Gulrajani et al, 2017
+            # "Improved Training of Wasserstein GANs"
+            if batch_index % 5 == 0 and batch_index != 0:
+                # Generator pass
+                generator_optimizer.zero_grad()
+
+                # Create noise for an input
+                input_noise = torch.rand(noise_size)
+
+                # Generate sequences and classify through discriminator
+                generated_sequences = generator(input_noise)
+                classifications = discriminator(generated_sequences)
+
+                # Calculate loss and step parameters
+                generator_loss = criterion(classifications, real_tensor)
+                generator_loss.backward()
+                generator_optimizer.step()
