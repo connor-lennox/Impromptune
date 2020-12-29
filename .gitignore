@@ -211,4 +211,4 @@ dmypy.json
 cython_debug/
 
 # Don't commit datasets
-Data/lpd_cleaned/*
+Data/Datasets/*
