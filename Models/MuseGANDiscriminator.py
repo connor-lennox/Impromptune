@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 
-from Discriminator import Discriminator
+from Models.Discriminator import Discriminator
 
 
 """See https://github.com/salu133445/ismir2019tutorial/blob/main/musegan.ipynb for more info.
@@ -66,11 +66,10 @@ class MuseGANDiscriminator(Discriminator):
         self.conv5 = DiscriminatorBlock(128, 128, (1, 2, 1), (1, 2, 1))
         self.conv6 = DiscriminatorBlock(128, 256, (1, 4, 1), (1, 2, 1))
         self.conv7 = DiscriminatorBlock(256, 512, (1, 3, 1), (1, 2, 1))
-        self.dense0 = torch.nn.Linear(512, 1024)
-        self.dense1 = torch.nn.Linear(1024, 1)
+        self.dense0 = torch.nn.Linear(2816, 1)
 
     def forward(self, x):
-        x = x.view(-1, n_measures, measure_resolution, n_pitches)
+        x = x.view(-1, 1, n_measures, measure_resolution, n_pitches)
         x = self.conv0(x)
         x = self.conv1(x)
         x = self.conv2(x)
@@ -78,7 +77,7 @@ class MuseGANDiscriminator(Discriminator):
         x = self.conv4(x)
         x = self.conv5(x)
         x = self.conv6(x)
-        x = x.view(-1, 512)
+        x = x.view(-1, 2816)
         x = self.dense0(x)
-        x = self.dense1(x)
+        x = torch.sigmoid(x)
         return x
