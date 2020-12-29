@@ -20,6 +20,8 @@ data_root = f"C:/Users/Connor/Documents/Research/Impromptune/Data/Datasets/"
 lpd_5_root = data_root + "lpd_5_cleansed/"
 lpd_cleaned_root = data_root + "lpd_cleaned/"
 
+samples_per_song = 4
+
 beats_per_measure = 4
 num_measures = 4
 min_notes_per_segment = 10
@@ -43,7 +45,7 @@ def extract_pianoroll(filename):
     return piano_track, roll.resolution
 
 
-def sample_segments(filename, max_samples=4):
+def sample_segments(filename, max_samples=samples_per_song):
     roll, beat_resolution = extract_pianoroll(filename)
     seq_len = roll.shape[0]
     sample_length = beat_resolution * beats_per_measure * num_measures
@@ -58,18 +60,18 @@ def load_samples(files, songs_to_sample):
                      for sample in sample_segments(song)])
 
 
-def sample_data(files_root, sample_ratio=100):
+def sample_data(files_root, target_samples=500):
     file_names = [os.path.join(root, name) for root, _, files in os.walk(files_root) for name in files]
-    samples = load_samples(file_names, songs_to_sample=len(file_names) // sample_ratio)
+    samples = load_samples(file_names, songs_to_sample=target_samples // samples_per_song)
     return samples
 
 
-def sample_lpd5(sample_ratio=100):
-    return sample_data(lpd_5_root, sample_ratio)
+def sample_lpd5(target_samples=500):
+    return sample_data(lpd_5_root, target_samples)
 
 
-def sample_lpd_cleansed(sample_ratio=100):
-    return sample_data(lpd_cleaned_root, sample_ratio)
+def sample_lpd_cleansed(target_samples=500):
+    return sample_data(lpd_cleaned_root, target_samples)
 
 
 if __name__ == '__main__':
