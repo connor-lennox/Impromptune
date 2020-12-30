@@ -1,7 +1,6 @@
-import numpy as np
 import torch
 
-from Models.MuseGANDiscriminator import MuseGANDiscriminator
+from GAN.Models.MuseGANDiscriminator import MuseGANDiscriminator
 from Data import lpd_loader
 
 

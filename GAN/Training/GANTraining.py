@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from Models.Generator import Generator
-from Models.Discriminator import Discriminator
+from GAN.Models.Generator import Generator
+from GAN.Models.Discriminator import Discriminator
 
 
 FAKE_LABEL = 0

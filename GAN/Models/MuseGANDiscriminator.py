@@ -1,8 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as func
 
-from Models.Discriminator import Discriminator
+from GAN.Models.Discriminator import Discriminator
 
 
 """See https://github.com/salu133445/ismir2019tutorial/blob/main/musegan.ipynb for more info.
