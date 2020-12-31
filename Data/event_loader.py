@@ -9,6 +9,7 @@ maestro_root = r"C:\Users\Connor\Documents\Research\Impromptune\Data\Datasets\ma
 maestro_events_root = r"C:\Users\Connor\Documents\Research\Impromptune\Data\Datasets\maestro-events"
 
 MAESTRO_EVENTS_SMALL = "maestro-events-small.pkl"
+MAESTRO_EVENTS_SMALL_DENSE = "maestro-events-small-dense.pkl"
 
 
 def find_maestro_midis():
@@ -34,6 +35,5 @@ def load_dataset(filename):
 
 
 if __name__ == '__main__':
-    # test_samples = sample_from_maestro()
-    # pickle_data("Datasets/maestro-events/maestro-events-small", test_samples)
-    print(len(load_dataset(MAESTRO_EVENTS_SMALL)))
+    test_samples = sample_from_maestro(songs_to_sample=16, samples_per_song=None)
+    pickle_data("maestro-events-small-dense", test_samples)
