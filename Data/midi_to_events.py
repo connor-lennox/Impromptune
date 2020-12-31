@@ -1,4 +1,5 @@
 import numpy as np
+from pretty_midi import PrettyMIDI
 
 
 NOTE_ON = 0
@@ -58,11 +59,17 @@ def _event_to_number(event_type, arg):
         return arg + 381
 
 
+def read_midi(midi_file, segment_length=30):
+    segment_resolution = int(segment_length * 125)
+    midi = PrettyMIDI(midi_file)
+    piano_roll = midi.get_piano_roll(125)
+    roll_segments = [piano_roll[:, x:x+segment_resolution]
+                     for x in range(0, piano_roll.shape[1]-segment_resolution, segment_resolution)]
+    event_segments = [piano_roll_to_events(segment) for segment in roll_segments]
+    return event_segments
+
+
 if __name__ == '__main__':
-    from pretty_midi import PrettyMIDI
     test_midi = r"C:\Users\Connor\Documents\Research\Impromptune\Data\Datasets\maestro-v3.0.0\2018\MIDI-Unprocessed_Recital1-3_MID--AUDIO_03_R1_2018_wav--4.midi"
-    pm = PrettyMIDI(test_midi)
-    # Get first 30 seconds of the piece:
-    roll = pm.get_piano_roll(125)[:3125]
-    test_events = piano_roll_to_events(roll)
-    print(test_events[:100])
+    test_segments = read_midi(test_midi)
+    print(test_segments)
