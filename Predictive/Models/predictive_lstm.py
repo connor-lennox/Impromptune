@@ -12,6 +12,7 @@ class PredictiveLSTM(nn.Module):
 
     def forward(self, x):
         x = self.embedding(x)
+        x = x.permute(1, 0, 2)
         x, _ = self.lstm(x)
         # Extract the last output of the LSTM (most informed)
         x = x[:, -1, :]
