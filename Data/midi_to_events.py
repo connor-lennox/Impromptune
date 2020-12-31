@@ -16,7 +16,7 @@ def piano_roll_to_events(piano_roll):
     timestep_counter = 0
 
     events = []
-    prev_state = np.zeros(128)
+    prev_state = np.zeros(88)
 
     for state in piano_roll.T:
         diff = state - prev_state
@@ -54,11 +54,11 @@ def _event_to_number(event_type, arg):
     if event_type == NOTE_ON:
         return arg
     elif event_type == NOTE_OFF:
-        return arg + 128
+        return arg + 88
     elif event_type == TIME_STEP:
-        return arg + 256 - 1
+        return arg + 176 - 1
     elif event_type == VELOCITY:
-        return arg + 381
+        return arg + 301
 
 
 def read_midi(midi_file, segment_length=30, sample_size=None):
@@ -66,6 +66,8 @@ def read_midi(midi_file, segment_length=30, sample_size=None):
     segment_resolution = int(segment_length * 125)
     midi = PrettyMIDI(midi_file)
     piano_roll = midi.get_piano_roll(125)
+    # Restrict piano roll to the actual notes on the piano
+    piano_roll = piano_roll[21:109, :]
     roll_segments = [piano_roll[:, x:x+segment_resolution]
                      for x in range(0, piano_roll.shape[1]-segment_resolution, segment_resolution)]
     if sample_size is not None:
