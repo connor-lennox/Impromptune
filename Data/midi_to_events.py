@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 from pretty_midi import PrettyMIDI
 
@@ -59,12 +61,15 @@ def _event_to_number(event_type, arg):
         return arg + 381
 
 
-def read_midi(midi_file, segment_length=30):
+def read_midi(midi_file, segment_length=30, sample_size=None):
+    print(midi_file)
     segment_resolution = int(segment_length * 125)
     midi = PrettyMIDI(midi_file)
     piano_roll = midi.get_piano_roll(125)
     roll_segments = [piano_roll[:, x:x+segment_resolution]
                      for x in range(0, piano_roll.shape[1]-segment_resolution, segment_resolution)]
+    if sample_size is not None:
+        roll_segments = random.sample(roll_segments, sample_size)
     event_segments = [piano_roll_to_events(segment) for segment in roll_segments]
     return event_segments
 
