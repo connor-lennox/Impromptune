@@ -27,6 +27,18 @@ def accuracy(predicted, real):
     return np.mean(predictions == real_np)
 
 
+def progress_string(done, total, bar_length=16, include_count=True):
+    num_filled = int(done / total * bar_length)
+    num_unfilled = bar_length - num_filled
+    bar = "[" + "=" * num_filled
+    if num_unfilled != 0:
+        bar += '>'
+    bar += " " * (num_unfilled-1) + "]"
+    if include_count:
+        bar += f" [{done}/{total}]"
+    return bar
+
+
 if __name__ == '__main__':
     test_data = [[1, 2, 3, 4, 5, 6], [2, 4, 6, 8, 10]]
     print(data_from_samples(test_data, given=3))
