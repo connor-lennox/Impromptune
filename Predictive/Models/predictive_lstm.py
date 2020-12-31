@@ -15,7 +15,7 @@ class PredictiveLSTM(nn.Module):
         x = x.permute(1, 0, 2)
         x, _ = self.lstm(x)
         # Extract the last output of the LSTM (most informed)
-        x = x[:, -1, :]
+        x = x[-1, :, :]
         # x = func.softmax(self.linear(x), dim=1)
         x = self.linear(x)
         return x
