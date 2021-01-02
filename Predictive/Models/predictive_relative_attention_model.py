@@ -2,13 +2,18 @@ import torch
 import torch.nn as nn
 
 from Predictive.Models.relative_multihead_attention import PredictiveRelativeMultiheadAttention
+from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
 class PRAm(nn.Module):
-    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256):
+    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, use_onehot_embed=False):
         super().__init__()
 
-        self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
+        if use_onehot_embed:
+            self.embedding = OneHotEmbedding(num_embeddings=333)
+        else:
+            self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
+
         self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
         self.linear = nn.Linear(value_dim, 333)
 
