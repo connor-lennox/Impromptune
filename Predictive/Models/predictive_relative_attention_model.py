@@ -5,15 +5,17 @@ from Predictive.Models.relative_multihead_attention import PredictiveRelativeMul
 
 
 class PRAm(nn.Module):
-    def __init__(self):
+    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256):
         super().__init__()
 
-        self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=333)
-        self.pred_attn = PredictiveRelativeMultiheadAttention(333, 64, 333)
+        self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
+        self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
+        self.linear = nn.Linear(value_dim, 333)
 
     def forward(self, xs):
         xs = self.embedding(xs)
         xs = self.pred_attn(xs)
+        xs = self.linear(xs)
         return xs
 
 
