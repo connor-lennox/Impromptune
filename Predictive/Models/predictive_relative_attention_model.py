@@ -10,6 +10,7 @@ class PRAm(nn.Module):
         super().__init__()
 
         if use_onehot_embed:
+            embedding_dim = 333
             self.embedding = OneHotEmbedding(num_embeddings=333)
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
