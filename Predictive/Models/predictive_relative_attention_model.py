@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from Predictive.Models.relative_multihead_attention import PredictiveRelativeMultiheadAttention
+from Predictive.Models.relative_multihead_attention import \
+    PredictiveRelativeMultiheadAttention, EfficientRelativeMultiheadAttention
 from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
@@ -15,7 +16,8 @@ class PRAm(nn.Module):
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
 
-        self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
+        self.rel_attn = EfficientRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
+        self.pred_attn = PredictiveRelativeMultiheadAttention(value_dim, key_dim, value_dim)
         self.linear = nn.Linear(value_dim, 333)
 
     def forward(self, xs):
