@@ -172,7 +172,7 @@ class EfficientRelativeMultiheadAttention(nn.Module):
         matrix = torch.flatten(matrix, 2, 3)    # Flatten last two dimensions
         matrix = F.pad(matrix, [0, seq_len-1])  # Pad an additional seq_len-1 elements
         matrix = torch.reshape(matrix, (matrix.shape[0], matrix.shape[1], seq_len+1, 2*seq_len-1))  # Reshape matrix
-        matrix = matrix[:, :, :seq_len, matrix.shape[0]-seq_len-1:]   # Slice to retain first seq_len rows and last seq_len columns
+        matrix = matrix[:, :, :seq_len, matrix.shape[3]-seq_len:]   # Slice to retain first seq_len rows and last seq_len columns
         return matrix
 
 
