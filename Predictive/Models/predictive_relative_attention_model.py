@@ -7,7 +7,7 @@ from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
 class PRAm(nn.Module):
-    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, use_onehot_embed=False):
+    def __init__(self, embedding_dim=256, key_dim=64, use_onehot_embed=False, num_attn_layers=2):
         super().__init__()
 
         if use_onehot_embed:
@@ -16,12 +16,15 @@ class PRAm(nn.Module):
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
 
-        self.rel_attn = EfficientRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
-        self.pred_attn = PredictiveRelativeMultiheadAttention(value_dim, key_dim, value_dim)
-        self.linear = nn.Linear(value_dim, 333)
+        self.rel_attn_layers = [EfficientRelativeMultiheadAttention(embedding_dim, key_dim, embedding_dim)
+                                for _ in range(num_attn_layers)]
+        self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, embedding_dim)
+        self.linear = nn.Linear(embedding_dim, 333)
 
     def forward(self, xs):
         xs = self.embedding(xs)
+        for rel_attn in self.rel_attn_layers:
+            xs = rel_attn(xs)
         xs = self.pred_attn(xs)
         xs = self.linear(xs)
         return xs
