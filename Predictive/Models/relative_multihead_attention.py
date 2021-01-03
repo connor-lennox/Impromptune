@@ -258,7 +258,13 @@ if __name__ == '__main__':
     # test_result = test_att(test_input)
     # # shape should be (batch,value_dim), as only one output is generated per input sequence
     # print(test_result.shape)
-    test_att = EfficientRelativeMultiheadAttention(3, key_dim=4, value_dim=4, n_heads=8, relative_cutoff=1)
-    test_input = torch.randn((1, 3000, 3))
+    test_eff_att = EfficientRelativeMultiheadAttention(3, key_dim=4, value_dim=4, n_heads=1, relative_cutoff=1)
+    test_att = RelativeMultiheadAttention(3, key_dim=4, value_dim=4, n_heads=1, relative_cutoff=1)
+    test_att.load_state_dict(test_eff_att.state_dict())
+    test_input = torch.randn((1, 3, 3))
+    # These results won't be the same since the efficient attention does not do relative positional values,
+    # but calculating both provides an entry to the function so that a breakpoint can look at the intermediary
+    # relative query position results.
     test_result = test_att(test_input)
+    test_eff_result = test_eff_att(test_input)
     print(test_result.shape)
