@@ -5,8 +5,8 @@ import pickle
 from Data import midi_to_events
 
 
-maestro_root = r"C:\Users\Connor\Documents\Research\Impromptune\Data\Datasets\maestro-v3.0.0"
-maestro_events_root = r"C:\Users\Connor\Documents\Research\Impromptune\Data\Datasets\maestro-events"
+maestro_root = r"Data\Datasets\maestro-v3.0.0"
+maestro_events_root = r"Data\Datasets\maestro-events"
 
 MAESTRO_EVENTS_SMALL = "maestro-events-small.pkl"
 MAESTRO_EVENTS_SMALL_DENSE = "maestro-events-small-dense.pkl"

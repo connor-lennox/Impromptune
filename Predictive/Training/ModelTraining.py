@@ -8,7 +8,7 @@ from Predictive.Models.predictive_relative_attention_model import PRAm
 
 def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=0.8):
     x_train, y_train, x_test, y_test = training_util.create_train_test(samples, train_ratio, given)
-    x_train, y_train = x_train[:512], y_train[:512]
+    # x_train, y_train = x_train[:512], y_train[:512]
 
     optim = torch.optim.Adam(model.parameters())
     criterion = torch.nn.CrossEntropyLoss()
@@ -37,10 +37,10 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
 
 if __name__ == '__main__':
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
-    net = PRAm(key_dim=128, value_dim=256, embedding_dim=256, use_onehot_embed=False, num_attn_layers=2)
+    net = PRAm(key_dim=64, value_dim=256, embedding_dim=256, use_onehot_embed=False, num_attn_layers=2)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     net = net.to(device)
-    train_model(net, data, batch_size=256, given=256, epochs=50)
+    train_model(net, data, batch_size=64, given=256, epochs=50)
     # filename = 'test_pram_k128_v256_1'
     # with open(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels" + '\\' + filename, 'wb+') as outfile:
     #     torch.save(test_pram.state_dict(), outfile)
