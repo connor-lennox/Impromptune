@@ -13,7 +13,7 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
     optim = torch.optim.Adam(model.parameters())
     criterion = torch.nn.CrossEntropyLoss()
 
-    num_batches = ((len(x_train) + 1) // batch_size)
+    num_batches = len(range(0, len(x_train)-1, batch_size))
     for i in range(epochs):
         loss_sum = 0
         acc_sum = 0
@@ -44,5 +44,9 @@ if __name__ == '__main__':
     #     filename = f'test_lstm_1-{i}'
     #     with open(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels" + '\\' + filename, 'wb+') as outfile:
     #         torch.save(test_lstm.state_dict(), outfile)
-    test_pram = PRAm()
-    train_model(test_pram, maestro_small, batch_size=32, given=256, epochs=50)
+    test_pram = PRAm(key_dim=128, embedding_dim=256, use_onehot_embed=False, num_attn_layers=2)
+    # test_pram.load_state_dict(torch.load(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels\test_pram_k128_v256_0"))
+    train_model(test_pram, maestro_small, batch_size=256, given=256, epochs=50)
+    # filename = 'test_pram_k128_v256_1'
+    # with open(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels" + '\\' + filename, 'wb+') as outfile:
+    #     torch.save(test_pram.state_dict(), outfile)
