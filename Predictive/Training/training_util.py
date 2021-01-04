@@ -18,6 +18,11 @@ def create_train_test(samples, train_ratio=0.8, given=24):
     train_cutoff = int(len(samples) * train_ratio)
     x_train, y_train = data_from_samples(samples[:train_cutoff], given)
     x_test, y_test = data_from_samples(samples[train_cutoff:], given)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    x_train = x_train.to(device)
+    y_train = y_train.to(device)
+    x_test = x_test.to(device)
+    y_test = y_test.to(device)
     return x_train, y_train, x_test, y_test
 
 

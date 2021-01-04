@@ -36,17 +36,11 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
 
 
 if __name__ == '__main__':
-    # test_lstm = PredictiveLSTM()
-    # test_lstm.load_state_dict(torch.load(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels\test_lstm_1-2"))
-    maestro_small = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
-    # for i in range(3, 7):
-    #     train_model(test_lstm, maestro_small, batch_size=1024, given=16, epochs=5)
-    #     filename = f'test_lstm_1-{i}'
-    #     with open(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels" + '\\' + filename, 'wb+') as outfile:
-    #         torch.save(test_lstm.state_dict(), outfile)
-    test_pram = PRAm(key_dim=128, embedding_dim=256, use_onehot_embed=False, num_attn_layers=2)
-    # test_pram.load_state_dict(torch.load(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels\test_pram_k128_v256_0"))
-    train_model(test_pram, maestro_small, batch_size=256, given=256, epochs=50)
+    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
+    net = PRAm(key_dim=128, value_dim=256, embedding_dim=256, use_onehot_embed=False, num_attn_layers=2)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    net = net.to(device)
+    train_model(net, data, batch_size=256, given=256, epochs=50)
     # filename = 'test_pram_k128_v256_1'
     # with open(r"C:\Users\Connor\Documents\Research\Impromptune\TrainedModels" + '\\' + filename, 'wb+') as outfile:
     #     torch.save(test_pram.state_dict(), outfile)
