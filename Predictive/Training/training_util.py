@@ -27,8 +27,8 @@ def create_train_test(samples, train_ratio=0.8, given=24):
 
 
 def accuracy(predicted, real):
-    predictions = np.argmax(predicted.detach().numpy(), axis=1)
-    real_np = real.detach().numpy()
+    predictions = np.argmax(predicted.detach().cpu().numpy(), axis=1)
+    real_np = real.detach().cpu().numpy()
     return np.mean(predictions == real_np)
 
 
