@@ -8,7 +8,7 @@ from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
 class PRAm(nn.Module):
-    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, use_onehot_embed=False, num_attn_layers=2):
+    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, use_onehot_embed=False, num_attn_layers=2, relative_cutoff=128):
         super().__init__()
 
         if use_onehot_embed:
@@ -17,9 +17,11 @@ class PRAm(nn.Module):
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
 
-        self.rel_attn_layers = nn.ModuleList([PRAmBlock(embedding_dim, key_dim, value_dim)
+        self.rel_attn_layers = nn.ModuleList([PRAmBlock(embedding_dim, key_dim, value_dim, relative_cutoff)
                                               for _ in range(num_attn_layers)])
-        self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
+        self.pred_attn = PredictiveRelativeMultiheadAttention(
+            embedding_dim, key_dim, value_dim, relative_cutoff=relative_cutoff
+        )
         self.linear = nn.Linear(value_dim, 333)
 
     def forward(self, xs):
@@ -32,10 +34,12 @@ class PRAm(nn.Module):
 
 
 class PRAmBlock(nn.Module):
-    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, activation=F.relu):
+    def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, relative_cutoff=128, activation=F.relu):
         super().__init__()
 
-        self.attn = EfficientRelativeMultiheadAttention(embedding_dim, key_dim=key_dim, value_dim=value_dim)
+        self.attn = EfficientRelativeMultiheadAttention(
+            embedding_dim, key_dim=key_dim, value_dim=value_dim, relative_cutoff=relative_cutoff
+        )
         self.norm1 = nn.LayerNorm(value_dim)
         self.linear = nn.Linear(value_dim, embedding_dim)
         self.norm2 = nn.LayerNorm(embedding_dim)
