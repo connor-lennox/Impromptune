@@ -17,8 +17,8 @@ class PRAm(nn.Module):
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
 
-        self.rel_attn_layers = [PRAmBlock(embedding_dim, key_dim, value_dim)
-                                for _ in range(num_attn_layers)]
+        self.rel_attn_layers = nn.ModuleList([PRAmBlock(embedding_dim, key_dim, value_dim)
+                                              for _ in range(num_attn_layers)])
         self.pred_attn = PredictiveRelativeMultiheadAttention(embedding_dim, key_dim, value_dim)
         self.linear = nn.Linear(value_dim, 333)
 
