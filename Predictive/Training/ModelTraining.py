@@ -48,7 +48,7 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
         ys = y_test[batch:batch+batch_size]
         result = model(xs)
         test_acc_sum += training_util.accuracy(result, ys)
-    print(f"\n\tGeneralization Error: {test_acc_sum/test_batches}")
+    print(f"\n\tGeneralization Accuracy: {test_acc_sum/test_batches}")
 
 
 if __name__ == '__main__':
