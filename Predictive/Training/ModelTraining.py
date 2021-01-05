@@ -1,4 +1,5 @@
 import datetime
+import re
 
 import torch
 
@@ -53,15 +54,33 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
 if __name__ == '__main__':
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
 
-    # Define model parameters
-    k_d = 64            # Key dimension
-    v_d = 256           # Value dimension
-    e_d = 256           # Embedding dimension
-    r_d = 128           # Relative cutoff
-    attn_layers = 1     # Number of intermediary relative attention layers
-    save_model = False  # Whether or not to save the model after training
+    model_to_load = "1609810493_pram_k64_v256_e256_r128_attn1.pram"
+    model_regex = r'\d+_pram_k(\d+)_v(\d+)_e(\d+)_r(\d+)_attn(\d+)\.pram'
+
+    # Either load model parameters from the loaded file, or use hard coded ones (new model)
+    if model_to_load is not None:
+        match = re.match(model_regex, model_to_load)
+
+        k_d = int(match[1])
+        v_d = int(match[2])
+        e_d = int(match[3])
+        r_d = int(match[4])
+        attn_layers = int(match[5])
+
+    else:
+        k_d = 64            # Key dimension
+        v_d = 256           # Value dimension
+        e_d = 256           # Embedding dimension
+        r_d = 128           # Relative cutoff
+        attn_layers = 1     # Number of intermediary relative attention layers
+
+    save_model = True  # Whether or not to save the model after training
 
     net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
+
+    if model_to_load is not None:
+        net.load_state_dict(torch.load(r"TrainedModels\\" + model_to_load))
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     net = net.to(device)
     train_model(net, data, batch_size=32, given=256, epochs=5)
