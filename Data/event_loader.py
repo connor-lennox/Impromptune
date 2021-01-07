@@ -11,6 +11,10 @@ maestro_events_root = r"Data\Datasets\maestro-events"
 MAESTRO_EVENTS_SMALL = "maestro-events-small.pkl"
 MAESTRO_EVENTS_SMALL_DENSE = "maestro-events-small-dense.pkl"
 
+MAESTRO_EVENTS_MEDIUM = "maestro-events-medium.pkl"
+
+MAESTRO_EVENTS_FULL = "maestro-events-full.pkl"
+
 
 def find_maestro_midis():
     return [os.path.join(root, name)
@@ -35,5 +39,5 @@ def load_dataset(filename):
 
 
 if __name__ == '__main__':
-    test_samples = sample_from_maestro(songs_to_sample=16, samples_per_song=None)
-    pickle_data("maestro-events-small-dense", test_samples)
+    test_samples = sample_from_maestro(songs_to_sample=1276, samples_per_song=None)
+    pickle_data("maestro-events-full.pkl", test_samples)
