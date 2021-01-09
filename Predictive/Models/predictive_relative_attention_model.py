@@ -11,6 +11,12 @@ class PRAm(nn.Module):
     def __init__(self, embedding_dim=256, key_dim=64, value_dim=256, use_onehot_embed=False, num_attn_layers=2, relative_cutoff=128):
         super().__init__()
 
+        self.key_dim = key_dim
+        self.embedding_dim = embedding_dim
+        self.value_dim = value_dim
+        self.num_attn_layers = num_attn_layers
+        self.relative_cutoff = relative_cutoff
+
         if use_onehot_embed:
             embedding_dim = 333
             self.embedding = OneHotEmbedding(num_embeddings=333)

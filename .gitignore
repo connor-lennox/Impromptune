@@ -213,3 +213,4 @@ cython_debug/
 # Don't commit datasets
 Data/Datasets/*
 /TrainedModels/
+/OutputMIDI/

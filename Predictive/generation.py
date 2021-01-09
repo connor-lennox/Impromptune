@@ -4,6 +4,10 @@ import numpy as np
 import torch
 import pretty_midi
 
+from Data import event_loader
+from Predictive.Training import training_util
+from Predictive.Models import model_persistence
+
 
 all_events = list(range(333))
 
@@ -36,7 +40,7 @@ def generate_sequence(model, stubs, generation_length, stochastic=False, tempera
 
         # Non-stochastic case: just take the most likely options (temperature has no impact)
         else:
-            continuation = torch.argmax(predictions, dim=1)
+            continuation = torch.argmax(predictions, dim=1, keepdim=True)
 
         # Concatenate our choices onto the stubs tensors
         stubs = torch.cat([stubs, continuation], dim=1)
@@ -135,6 +139,11 @@ def piano_roll_to_pretty_midi(piano_roll, fs=125, program=0):
 
 
 if __name__ == '__main__':
-    test_roll = events_to_piano_roll([332, 53, 179, 53+88, 57, 179, 57+88])
+    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
+    test_stub = training_util.create_train_test(data)[2][0][None, :]
+    test_model = model_persistence.load_model("1609868922_pram_k64_v256_e256_r128_attn1.pram")
+    test_generated_seq = generate_sequence(test_model, test_stub, 100)
+    test_roll = events_to_piano_roll(test_generated_seq[0])
     test_pm = piano_roll_to_pretty_midi(test_roll)
+    test_pm.write("OutputMIDI/testoutput.mid")
     print(test_pm)
