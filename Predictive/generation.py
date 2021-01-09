@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import torch
+import pretty_midi
 
 
 all_events = list(range(333))
@@ -71,12 +72,69 @@ def events_to_piano_roll(events):
     roll = np.array(roll)
     # Pad the matrix to return it to shape (seq_len, 128)
     roll = np.pad(roll, ((0, 0), (21, 19)))
-    return roll
+    # Transpose the matrix so the first axis is the note axis (for conversion to PrettyMIDI objects)
+    return roll.T
 
 
 def seqs_to_rolls(seqs):
     return [events_to_piano_roll(seq) for seq in seqs]
 
 
+# PrettyMIDI demo script showing conversion of piano roll to PrettyMIDI object
+# https://github.com/craffel/pretty-midi/blob/master/examples/reverse_pianoroll.py
+def piano_roll_to_pretty_midi(piano_roll, fs=125, program=0):
+    """Convert a Piano Roll array into a PrettyMidi object
+     with a single instrument.
+    Parameters
+    ----------
+    piano_roll : np.ndarray, shape=(128,frames), dtype=int
+        Piano roll of one instrument
+    fs : int
+        Sampling frequency of the columns, i.e. each column is spaced apart
+        by ``1./fs`` seconds.
+    program : int
+        The program number of the instrument.
+    Returns
+    -------
+    midi_object : pretty_midi.PrettyMIDI
+        A pretty_midi.PrettyMIDI class instance describing
+        the piano roll.
+    """
+    notes, frames = piano_roll.shape
+    pm = pretty_midi.PrettyMIDI()
+    instrument = pretty_midi.Instrument(program=program)
+
+    # pad 1 column of zeros so we can acknowledge inital and ending events
+    piano_roll = np.pad(piano_roll, [(0, 0), (1, 1)], 'constant')
+
+    # use changes in velocities to find note on / note off events
+    velocity_changes = np.nonzero(np.diff(piano_roll).T)
+
+    # keep track on velocities and note on times
+    prev_velocities = np.zeros(notes, dtype=int)
+    note_on_time = np.zeros(notes)
+
+    for time, note in zip(*velocity_changes):
+        # use time + 1 because of padding above
+        velocity = piano_roll[note, time + 1]
+        time = time / fs
+        if velocity > 0:
+            if prev_velocities[note] == 0:
+                note_on_time[note] = time
+                prev_velocities[note] = velocity
+        else:
+            pm_note = pretty_midi.Note(
+                velocity=prev_velocities[note],
+                pitch=note,
+                start=note_on_time[note],
+                end=time)
+            instrument.notes.append(pm_note)
+            prev_velocities[note] = 0
+    pm.instruments.append(instrument)
+    return pm
+
+
 if __name__ == '__main__':
-    print(events_to_piano_roll([332, 53, 179, 53+88, 57, 179, 57+88]))
+    test_roll = events_to_piano_roll([332, 53, 179, 53+88, 57, 179, 57+88])
+    test_pm = piano_roll_to_pretty_midi(test_roll)
+    print(test_pm)
