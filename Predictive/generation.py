@@ -1,4 +1,6 @@
 import random
+import os
+import datetime
 
 import numpy as np
 import torch
@@ -28,6 +30,7 @@ def generate_sequence(model, stubs, generation_length, stochastic=False, tempera
         if stochastic:
             # Apply temperature control to affect how flat/peaked the distribution should be
             predictions *= temperature
+            predictions = torch.softmax(predictions, dim=1)
 
             # Convert probabilities to a python list so we can do weighted random choices
             probs = predictions.detach().numpy().tolist()
@@ -140,10 +143,17 @@ def piano_roll_to_pretty_midi(piano_roll, fs=125, program=0):
 
 if __name__ == '__main__':
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
-    test_stub = training_util.create_train_test(data)[2][0][None, :]
-    test_model = model_persistence.load_model("1609868922_pram_k64_v256_e256_r128_attn1.pram")
-    test_generated_seq = generate_sequence(test_model, test_stub, 100)
-    test_roll = events_to_piano_roll(test_generated_seq[0])
-    test_pm = piano_roll_to_pretty_midi(test_roll)
-    test_pm.write("OutputMIDI/testoutput.mid")
-    print(test_pm)
+    _, _, samples, _ = training_util.create_train_test(data, given=256)
+    test_stubs = torch.vstack([samples[0], samples[4000], samples[8000], samples[12000]])
+    # test_stubs = torch.tensor([[332], [332], [332], [332], [332]])
+    model_to_load = "1610256542_pram_k64_v256_e256_r1024_attn1.pram"
+    generator_model = model_persistence.load_model(model_to_load)
+    test_generated_seqs = generate_sequence(generator_model, test_stubs, 1100, stochastic=True, temperature=.9)
+    test_roll = seqs_to_rolls(test_generated_seqs)
+    output_folder = datetime.datetime.now().strftime('%d%m%y-%H%M%S')
+    os.mkdir("OutputMIDI/" + output_folder)
+    with open(os.path.join("OutputMIDI", output_folder, "output.txt"), 'w+') as outtext:
+        outtext.write(f"Output generated {datetime.datetime.now().strftime('%d%m%y-%H%M%S')} by model {model_to_load}")
+    for i in range(len(test_roll)):
+        test_pm = piano_roll_to_pretty_midi(test_roll[i])
+        test_pm.write(f"OutputMIDI/{output_folder}/output_{i}.mid")
