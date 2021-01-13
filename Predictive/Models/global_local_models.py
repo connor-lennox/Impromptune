@@ -82,14 +82,14 @@ class ParallelModel(nn.Module):
         xs = self.embedding(xs)
         loc = self.local_attn_block(xs)
         glo = self.global_attn_block(xs)
-        xs = torch.cat([loc, glo], dim=0)
+        xs = torch.cat([loc, glo], dim=-1)
         xs = self.predictive_layer(xs)
         xs = self.linear(xs)
         return xs
 
 
 if __name__ == '__main__':
-    m = ParallelModel()
+    m = ParallelModel(local_range=(2, 2))
     test_input = torch.randint(0, high=333, size=(4, 8))
     test_output = m(test_input)
     print(test_output.shape)
