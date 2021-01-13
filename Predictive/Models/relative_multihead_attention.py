@@ -246,6 +246,7 @@ class LocalRelativeMultiheadAttention(nn.Module):
     def _generate_local_mask(self, seq_len, device):
         mask = torch.tensor([0] + [1] * (self.look_back+1+self.look_forward) + [0] * (seq_len-1-self.look_back)).to(device)
         mask = mask.repeat(seq_len)
+        # TODO: make this work for when the sequence length is less than the neighborhood size
         mask = mask[(self.look_back+1):-(seq_len-1-self.look_back)]
         mask = mask.reshape(seq_len, -1)
         mask = mask[:seq_len, :seq_len]
