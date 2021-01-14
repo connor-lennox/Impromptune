@@ -89,7 +89,7 @@ class ParallelModel(nn.Module):
 
 
 if __name__ == '__main__':
-    m = ParallelModel(local_range=(2, 2))
+    m = ParallelModel()
     test_input = torch.randint(0, high=333, size=(4, 8))
     test_output = m(test_input)
     print(test_output.shape)
