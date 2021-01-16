@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Predictive.Models.relative_multihead_attention import *
-from Predictive.Models.relative_attention_blocks import *
+from Predictive.Models.relative_multihead_attention import PredictiveRelativeMultiheadAttention
+from Predictive.Models.relative_attention_blocks import LocalRelativeAttentionBlock, GlobalRelativeAttentionBlock
 from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
@@ -17,9 +17,12 @@ class StackedModel(nn.Module):
         self.value_dim = value_dim
         self.local_range = local_range
         self.relative_cutoff = relative_cutoff
+        self.n_heads = n_heads
+        self.use_onehot = use_onehot_embed
 
         if use_onehot_embed:
             embedding_dim = 333
+            self.embedding_dim = 333
             self.embedding = OneHotEmbedding(num_embeddings=333)
         else:
             self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
@@ -57,6 +60,8 @@ class ParallelModel(nn.Module):
         self.value_dim = value_dim
         self.local_range = local_range
         self.relative_cutoff = relative_cutoff
+        self.n_heads = n_heads
+        self.use_onehot = use_onehot_embed
 
         if use_onehot_embed:
             embedding_dim = 333
