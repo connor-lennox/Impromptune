@@ -250,7 +250,7 @@ class LocalRelativeMultiheadAttention(nn.Module):
             mask = F.pad(mask, (0, self.look_back-seq_len+1))
             mask = mask[self.look_back+1:]
         else:
-            right_end = None if seq_len-self.look_back == -1 else -(seq_len-self.look_back-1)
+            right_end = None if abs(seq_len-self.look_back) == 1 else -(seq_len-self.look_back-1)
             mask = mask[self.look_back+1:right_end]
         mask = mask.reshape(seq_len, -1)
         mask = mask[:seq_len, :seq_len]
@@ -366,7 +366,7 @@ if __name__ == '__main__':
     # test_eff_result = test_eff_att(test_input)
     # print(test_result.shape)
 
-    test_local_attn = LocalRelativeMultiheadAttention(3, key_dim=4, value_dim=4, n_heads=8, look_back=10, look_forward=5)
-    test_input = torch.randn(8, 100, 3)
+    test_local_attn = LocalRelativeMultiheadAttention(3, key_dim=4, value_dim=4, n_heads=8, look_back=10, look_forward=10)
+    test_input = torch.randn(8, 9, 3)
     test_output = test_local_attn(test_input)
     print(test_output.shape)
