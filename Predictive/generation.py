@@ -33,17 +33,18 @@ def generate_sequence(model, stubs, generation_length, stochastic=False, tempera
             predictions = torch.softmax(predictions, dim=1)
 
             # Convert probabilities to a python list so we can do weighted random choices
-            probs = predictions.detach().numpy().tolist()
+            probs = predictions.cpu().detach().numpy().tolist()
 
             # Randomly sample over each probability-space list
             choices = [random.choices(population=all_events, weights=probs[i], k=1) for i in range(len(probs))]
 
             # Recombine choices into a tensor of shape (batch)
-            continuation = torch.tensor(choices)
+            continuation = torch.tensor(choices).to(stubs.device)
 
         # Non-stochastic case: just take the most likely options (temperature has no impact)
         else:
-            continuation = torch.argmax(predictions, dim=1, keepdim=True)
+            continuation = torch.argmax(predictions, dim=1, keepdim=True).to(stubs.device)
+            print(continuation)
 
         # Concatenate our choices onto the stubs tensors
         stubs = torch.cat([stubs, continuation], dim=1)
@@ -142,14 +143,17 @@ def piano_roll_to_pretty_midi(piano_roll, fs=125, program=0):
 
 
 if __name__ == '__main__':
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
     _, _, samples, _ = training_util.create_train_test(data, given=256)
-    test_stubs = torch.vstack([samples[0], samples[4000], samples[8000], samples[12000]])
-    # test_stubs = torch.tensor([[332], [332], [332], [332], [332]])
-    model_to_load = "1610256542_pram_k64_v256_e256_r1024_attn1.pram"
-    generator_model = model_persistence.load_model(model_to_load)
-    test_generated_seqs = generate_sequence(generator_model, test_stubs, 1100, stochastic=True, temperature=.9)
+    # test_stubs = torch.vstack([samples[0], samples[4000], samples[8000], samples[12000]]).to(device)
+    test_stubs = torch.tensor([[332]]).to(device)
+    model_to_load = "1610907402_parallel_k64_v333_e256_r1024_heads8_onehot1_lb128_lf128.parallel"
+    generator_model = model_persistence.load_model(model_to_load).to(device)
+    test_generated_seqs = generate_sequence(generator_model, test_stubs, 1100, stochastic=False, temperature=1.0).cpu()
     test_roll = seqs_to_rolls(test_generated_seqs)
+
     output_folder = datetime.datetime.now().strftime('%d%m%y-%H%M%S')
     os.mkdir("OutputMIDI/" + output_folder)
     with open(os.path.join("OutputMIDI", output_folder, "output.txt"), 'w+') as outtext:
