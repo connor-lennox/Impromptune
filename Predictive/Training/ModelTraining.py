@@ -7,6 +7,8 @@ from Data import event_loader
 from Predictive.Training import training_util
 from Predictive.Models.predictive_lstm import PredictiveLSTM
 from Predictive.Models.predictive_relative_attention_model import PRAm
+from Predictive.Models import model_persistence
+from Predictive.Models.global_local_models import StackedModel, ParallelModel
 
 
 def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=0.8):
@@ -54,38 +56,31 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, train_ratio=
 if __name__ == '__main__':
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
 
-    model_to_load = "1609810493_pram_k64_v256_e256_r128_attn1.pram"
-    model_regex = r'\d+_pram_k(\d+)_v(\d+)_e(\d+)_r(\d+)_attn(\d+)\.pram'
+    model_to_load = None
 
     # Either load model parameters from the loaded file, or use hard coded ones (new model)
     if model_to_load is not None:
-        match = re.match(model_regex, model_to_load)
-
-        k_d = int(match[1])
-        v_d = int(match[2])
-        e_d = int(match[3])
-        r_d = int(match[4])
-        attn_layers = int(match[5])
+        net = model_persistence.load_model(model_to_load)
 
     else:
         k_d = 64            # Key dimension
-        v_d = 256           # Value dimension
+        v_d = 333           # Value dimension
         e_d = 256           # Embedding dimension
-        r_d = 128           # Relative cutoff
+        r_d = 1024           # Relative cutoff
         attn_layers = 1     # Number of intermediary relative attention layers
+        n_heads = 8         # Attention heads
+        use_onehot_embed = True    # Use one-hot embedding or learned embeddings
+        local_range = (128, 128)    # Local range for models using local attention
+
+        # net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
+        net = ParallelModel(embedding_dim=e_d, key_dim=k_d, value_dim=v_d, relative_cutoff=r_d, n_heads=n_heads,
+                            use_onehot_embed=use_onehot_embed, local_range=local_range)
 
     save_model = True  # Whether or not to save the model after training
 
-    net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
-
-    if model_to_load is not None:
-        net.load_state_dict(torch.load(r"TrainedModels\\" + model_to_load))
-
     device = "cuda" if torch.cuda.is_available() else "cpu"
     net = net.to(device)
-    train_model(net, data, batch_size=32, given=256, epochs=5)
-    filename = f'{int(datetime.datetime.now().timestamp())}_pram_k{k_d}_v{v_d}_e{e_d}_r{r_d}_attn{attn_layers}.pram'
+    train_model(net, data, batch_size=4, given=500, epochs=5)
 
     if save_model:
-        with open(r"TrainedModels" + '\\' + filename, 'wb+') as outfile:
-            torch.save(net.state_dict(), outfile)
+        model_persistence.save_model(net)
