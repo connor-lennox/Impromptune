@@ -332,7 +332,7 @@ class PredictiveRelativeMultiheadAttention(nn.Module):
                              alphas, self._generate_relative_positional_embeddings(self.a_v, seq_len))
 
         # z of shape (batch, n_heads, value_dim)
-        z = qkv + v_rel
+        z = qkv #+ v_rel
 
         # Combine heads with w_o weight vector
         result = torch.einsum('bhv,h->bv', z, self.w_o)
