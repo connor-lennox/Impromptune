@@ -1,5 +1,21 @@
 import numpy as np
 import torch
+from torch.utils.data import Dataset
+
+
+class EventsDataset(Dataset):
+    # A dataset of events-style data
+    def __init__(self, xs, ys):
+        # xs is a tensor of shape (sequences, event)
+        self.xs = xs
+        # ys is a tensor of shape (sequences), representing the next event for each x in xs
+        self.ys = ys
+
+    def __getitem__(self, item):
+        return self.xs[item], self.ys[item]
+
+    def __len__(self):
+        return self.xs.shape[0]
 
 
 def data_from_samples(samples, given=24):
@@ -11,19 +27,28 @@ def data_from_samples(samples, given=24):
         sample[i+given] for sample in samples for i in range(0, len(sample) - given)
     ]
 
-    return torch.tensor(xs), torch.tensor(ys)
+    return EventsDataset(torch.tensor(xs), torch.tensor(ys))
 
 
 def create_train_test(samples, train_ratio=0.8, given=24):
     train_cutoff = int(len(samples) * train_ratio)
-    x_train, y_train = data_from_samples(samples[:train_cutoff], given)
-    x_test, y_test = data_from_samples(samples[train_cutoff:], given)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    x_train = x_train.to(device)
-    y_train = y_train.to(device)
-    x_test = x_test.to(device)
-    y_test = y_test.to(device)
-    return x_train, y_train, x_test, y_test
+    train_dataset = data_from_samples(samples[:train_cutoff], given)
+    test_dataset = data_from_samples(samples[train_cutoff:], given)
+
+    return train_dataset, test_dataset
+
+
+def create_weights_for_dataset(dataset, num_classes=333):
+    # Weight is inversely proportional to commonality, in an attempt to normalize
+    # the ratio of samples in the dataset.
+    labels = dataset.ys
+    events, counts = torch.unique(labels, return_counts=True)
+    num_samples = torch.sum(counts)
+    weight_per_class = [0.] * num_classes
+    for i in range(len(events)):
+        weight_per_class[events[i]] = num_samples / counts[i] if counts[i] != 0 else 0
+    weight_per_sample = torch.tensor([weight_per_class[y] for y in labels])
+    return weight_per_sample
 
 
 def accuracy(predicted, real):
