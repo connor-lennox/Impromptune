@@ -12,6 +12,9 @@ from Predictive.Models import model_persistence
 from Predictive.Models.global_local_models import StackedModel, ParallelModel
 
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
 def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, train_ratio=0.8):
     train_dataset, test_dataset = training_util.create_train_test(samples, train_ratio, given)
     y_weights = training_util.create_weights_for_dataset(train_dataset)
@@ -28,8 +31,8 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, t
         acc_sum = 0
         for batch_index, sample in enumerate(loader):
             print(f"\rEpoch {i+1} " + training_util.progress_string(batch_index+1, num_batches), end="")
-            xs = sample[0]
-            ys = sample[1]
+            xs = sample[0].to(device)
+            ys = sample[1].to(device)
 
             optim.zero_grad()
             result = model(xs)
@@ -52,8 +55,8 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, t
     for batch_index, sample in enumerate(test_loader):
         print("\rCalculating Generalization Error: " +
               training_util.progress_string(batch_index+1, test_batches), end="")
-        xs = sample[0]
-        ys = sample[1]
+        xs = sample[0].to(device)
+        ys = sample[1].to(device)
         result = model(xs)
         test_acc_sum += training_util.accuracy(result, ys)
     print(f"\n\tGeneralization Accuracy: {test_acc_sum/test_batches}")
@@ -84,9 +87,8 @@ if __name__ == '__main__':
 
     save_model = True  # Whether or not to save the model after training
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
     net = net.to(device)
-    train_model(net, data, batch_size=4, given=500, epochs=5)
+    train_model(net, data, batch_size=16, given=500, epochs=5)
 
     if save_model:
         model_persistence.save_model(net)
