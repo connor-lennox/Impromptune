@@ -81,3 +81,13 @@ def save_model(model):
 
     with open(r"TrainedModels" + '\\' + filename, 'wb+') as outfile:
         torch.save(model.state_dict(), outfile)
+
+
+def pickle_model(model, filename):
+    with open("TrainedModels" + '\\' + filename + '.model', 'wb+') as file:
+        torch.save(model, file)
+
+
+def unpickle_model(filename):
+    with open("TrainedModels" + '\\' + filename, 'rb') as infile:
+        return torch.load(infile)
