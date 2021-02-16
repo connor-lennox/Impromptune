@@ -3,7 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from Predictive.Models.relative_multihead_attention import \
-    PredictiveRelativeMultiheadAttention, EfficientRelativeMultiheadAttention, InformedPredictiveAttention
+    PredictiveRelativeMultiheadAttention, EfficientRelativeMultiheadAttention, InformedPredictiveAttention, \
+    LocalRelativeMultiheadAttention
 from Predictive.Models.one_hot_embedding import OneHotEmbedding
 
 
@@ -12,11 +13,15 @@ class InformedTestModel(nn.Module):
         super().__init__()
 
         self.embedding = OneHotEmbedding(333)
-        self.attn = InformedPredictiveAttention(333, 64, 128, 8, 128)
-        self.linear = nn.Linear(128, 333)
+        # self.embedding = nn.Embedding(333, 333)
+        self.local_attn = LocalRelativeMultiheadAttention(embed_dim=333, key_dim=256, look_back=64, look_forward=64, value_dim=512)
+        self.attn = InformedPredictiveAttention(512, 256, 333, 8, 128)
+        # self.linear = nn.Linear(512, 333)
+        self.norm1 = nn.LayerNorm(333)
 
     def forward(self, xs):
         xs = self.embedding(xs)
+        xs = F.relu(self.local_attn(xs))
         xs = self.attn(xs)
-        xs = self.linear(xs)
+        # xs = self.linear(xs)
         return xs

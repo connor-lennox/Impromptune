@@ -10,6 +10,7 @@ from Predictive.Models.predictive_lstm import PredictiveLSTM
 from Predictive.Models.predictive_relative_attention_model import PRAm
 from Predictive.Models import model_persistence
 from Predictive.Models.global_local_models import StackedModel, ParallelModel
+from Predictive.Models.test_models import InformedTestModel
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -63,7 +64,7 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, t
 
 
 if __name__ == '__main__':
-    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_SMALL_DENSE)
+    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_MEDIUM)
 
     model_to_load = None
 
@@ -72,23 +73,29 @@ if __name__ == '__main__':
         net = model_persistence.load_model(model_to_load)
 
     else:
-        k_d = 64            # Key dimension
-        v_d = 333           # Value dimension
-        e_d = 256           # Embedding dimension
-        r_d = 1024           # Relative cutoff
-        attn_layers = 1     # Number of intermediary relative attention layers
-        n_heads = 8         # Attention heads
-        use_onehot_embed = True    # Use one-hot embedding or learned embeddings
-        local_range = (128, 128)    # Local range for models using local attention
+        # k_d = 64            # Key dimension
+        # v_d = 333           # Value dimension
+        # e_d = 256           # Embedding dimension
+        # r_d = 1024           # Relative cutoff
+        # attn_layers = 1     # Number of intermediary relative attention layers
+        # n_heads = 8         # Attention heads
+        # use_onehot_embed = True    # Use one-hot embedding or learned embeddings
+        # local_range = (128, 128)    # Local range for models using local attention
+        #
+        # # net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
+        # net = StackedModel(embedding_dim=e_d, key_dim=k_d, value_dim=v_d, relative_cutoff=r_d, n_heads=n_heads,
+        #                    use_onehot_embed=use_onehot_embed, local_range=local_range)
+        net = InformedTestModel()
 
-        # net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
-        net = ParallelModel(embedding_dim=e_d, key_dim=k_d, value_dim=v_d, relative_cutoff=r_d, n_heads=n_heads,
-                            use_onehot_embed=use_onehot_embed, local_range=local_range)
-
-    save_model = True  # Whether or not to save the model after training
+    save_model = False      # Whether or not to save the model after training
+    pickle_model = True     # Whether or not to pickle model after training
+    pickle_model_name = "onehot-localattn-relu-pred-relu-linear-k256-v512"
 
     net = net.to(device)
     train_model(net, data, batch_size=16, given=500, epochs=5)
 
     if save_model:
         model_persistence.save_model(net)
+
+    if pickle_model:
+        model_persistence.pickle_model(net, pickle_model_name)

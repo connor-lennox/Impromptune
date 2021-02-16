@@ -100,6 +100,7 @@ class EfficientRelativeMultiheadAttention(nn.Module):
         self.w_o = nn.Parameter(torch.Tensor(n_heads))
 
         # Relative positional values for each element relative_cutoff out from center, plus one for center
+        self.a_q = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
         self.a_k = nn.Parameter(torch.Tensor(relative_cutoff*2+1, key_dim))
         self.a_v = nn.Parameter(torch.Tensor(relative_cutoff*2+1, value_dim))
 
@@ -111,6 +112,7 @@ class EfficientRelativeMultiheadAttention(nn.Module):
         init.kaiming_uniform_(self.w_v, a=sqrt(5))
         init.ones_(self.w_o)
 
+        init.kaiming_uniform_(self.a_q, a=sqrt(5))
         init.kaiming_uniform_(self.a_k, a=sqrt(5))
         init.kaiming_uniform_(self.a_v, a=sqrt(5))
 
@@ -131,8 +133,9 @@ class EfficientRelativeMultiheadAttention(nn.Module):
         # queries x relative positional encodings
         # using "skewing" technique
         # This matrix has shape (batch, n_heads, seq_len, seq_len*2+1), and the elements are not lined up properly.
+        positional_queries = torch.einsum('bse,heq->bhsq', xs, self.a_q)
         q_rel = torch.einsum('bhiq,rq->bhir',
-                             queries, self._generate_relative_positional_embeddings(self.a_k, seq_len))
+                             positional_queries, self._generate_relative_positional_embeddings(self.a_k, seq_len))
         q_rel = self._skew_matrix(q_rel)
 
         # sum the standard q*k component and the relative positional query component
@@ -191,6 +194,7 @@ class LocalRelativeMultiheadAttention(nn.Module):
         self.w_o = nn.Parameter(torch.Tensor(n_heads))
 
         # Relative position parameter (applied only to queries) based on lookback/forward
+        self.a_q = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
         self.a_k = nn.Parameter(torch.Tensor(look_back+1+look_forward, key_dim))
 
         self.reset_parameters()
@@ -200,6 +204,7 @@ class LocalRelativeMultiheadAttention(nn.Module):
         init.kaiming_uniform_(self.w_k, a=sqrt(5))
         init.kaiming_uniform_(self.w_v, a=sqrt(5))
         init.ones_(self.w_o)
+        init.kaiming_uniform_(self.a_q, a=sqrt(5))
         init.kaiming_uniform_(self.a_k, a=sqrt(5))
 
     def forward(self, xs):
@@ -220,8 +225,9 @@ class LocalRelativeMultiheadAttention(nn.Module):
         # queries x relative positional encodings
         # using "skewing" technique
         # This matrix has shape (batch, n_heads, seq_len, seq_len*2+1), and the elements are not lined up properly.
+        positional_query = torch.einsum('bse,heq->bhsq', xs, self.a_q)
         q_rel = torch.einsum('bhiq,rq->bhir',
-                             queries, self._generate_relative_positional_embeddings(self.a_k, seq_len))
+                             positional_query, self._generate_relative_positional_embeddings(self.a_k, seq_len))
         q_rel = self._skew_matrix(q_rel)
 
         # sum the standard q*k component and the relative positional query component
@@ -287,6 +293,7 @@ class PredictiveRelativeMultiheadAttention(nn.Module):
         self.w_o = nn.Parameter(torch.Tensor(n_heads))
 
         # Relative positional values go only backwards now
+        self.a_q = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
         self.a_k = nn.Parameter(torch.Tensor(relative_cutoff+1, key_dim))
         self.a_v = nn.Parameter(torch.Tensor(relative_cutoff+1, value_dim))
 
@@ -298,6 +305,7 @@ class PredictiveRelativeMultiheadAttention(nn.Module):
         init.kaiming_uniform_(self.w_v, a=sqrt(5))
         init.ones_(self.w_o)
 
+        init.kaiming_uniform_(self.a_q, a=sqrt(5))
         init.kaiming_uniform_(self.a_k, a=sqrt(5))
         init.kaiming_uniform_(self.a_v, a=sqrt(5))
 
@@ -308,6 +316,7 @@ class PredictiveRelativeMultiheadAttention(nn.Module):
 
         # Only the last element of the sequence will be used to generate a query:
         query = torch.einsum('be,heq->bhq', xs[:, -1, :], self.w_q)
+        positional_query = torch.einsum('be,heq->bhq', xs[:, -1, :], self.a_q)
 
         # Keys and values still calculated for every element:
         keys = torch.einsum('bse,hek->bhsk', xs, self.w_k)
@@ -318,7 +327,7 @@ class PredictiveRelativeMultiheadAttention(nn.Module):
 
         # Query x rel. key encoding
         q_rel = torch.einsum('bhq,sq->bhs',
-                             query, self._generate_relative_positional_embeddings(self.a_k, seq_len))
+                             positional_query, self._generate_relative_positional_embeddings(self.a_k, seq_len))
 
         # Shape of e: (batch, head, seq_len)
         e = (q_k + q_rel) / sqrt(self.value_dim)
