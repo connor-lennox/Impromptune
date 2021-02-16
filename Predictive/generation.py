@@ -142,29 +142,44 @@ def piano_roll_to_pretty_midi(piano_roll, fs=125, program=0):
     return pm
 
 
+DEBUG = True
+
 if __name__ == '__main__':
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    GIVEN_EVENTS = 256
+
+    # Load dataset
     data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_MEDIUM)
-    train_data, test_data = training_util.create_train_test(data, given=256)
+    train_data, test_data = training_util.create_train_test(data, given=GIVEN_EVENTS)
+
+    # Retrieve stubs from the test dataset
     # test_stubs = torch.vstack([test_data[0][0], test_data[4000][0], test_data[8000][0], test_data[12000][0]]).to(device)
-    test_stubs = torch.vstack([test_data[4000][0]])
+    test_stubs = torch.vstack([test_data[4000][0]]).to(device)
     # test_stubs = torch.tensor([[332]]).to(device)
+
+    # Load in model
     model_to_load = "onehot-localattn-relu-pred-k256-v512.model"
     # generator_model = model_persistence.load_model(model_to_load).to(device)
     generator_model = model_persistence.unpickle_model(model_to_load).to(device)
+
+    # Generate sequences
     test_generated_seqs = generate_sequence(generator_model, test_stubs, 1100, stochastic=False, temperature=1.0).cpu()
 
-    first_seq = test_generated_seqs[0, 256:].detach().numpy()
-    plt.hist(first_seq, bins=333, range=(0, 332))
-    plt.show()
+    # If debugging, draw some plots of generated events and
+    if DEBUG:
+        first_seq = test_generated_seqs[0, GIVEN_EVENTS:].detach().numpy()
 
-    plt.plot(first_seq, '+')
-    plt.show()
+        plt.plot(first_seq, '+')
+        plt.show()
 
+        plt.hist(first_seq, bins=333, range=(0, 332))
+        plt.show()
 
+    # Convert events to piano roll format
     test_roll = seqs_to_rolls(test_generated_seqs)
 
+    # Output MIDI files for each generated piano roll
     output_folder = datetime.datetime.now().strftime('%d%m%y-%H%M%S')
     os.mkdir("OutputMIDI/" + output_folder)
     with open(os.path.join("OutputMIDI", output_folder, "output.txt"), 'w+') as outtext:
