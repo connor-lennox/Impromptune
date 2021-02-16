@@ -12,7 +12,7 @@ from Predictive.Training import training_util
 from Predictive.Models import model_persistence
 
 
-all_events = list(range(333))
+all_events = list(range(240))
 
 
 def generate_sequence(model, stubs, generation_length, stochastic=False, temperature=1.0):
@@ -67,12 +67,12 @@ def events_to_piano_roll(events):
             current_state[event] = current_velocity
         elif event < 176:
             current_state[event-88] = 0
-        elif event < 301:
+        elif event < 207:
             # 8 ms sampling rate: 1 time-step = 1 state
             for _ in range(event-176+1):
                 roll.append(np.array(current_state))
-        elif event < 333:
-            current_velocity = (event-301)*4
+        elif event < 240:
+            current_velocity = (event-207)*4
         else:
             raise ValueError(f"Invalid event {event} passed")
 
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         plt.plot(first_seq, '+')
         plt.show()
 
-        plt.hist(first_seq, bins=333, range=(0, 332))
+        plt.hist(first_seq, bins=240, range=(0, 239))
         plt.show()
 
     # Convert events to piano roll format

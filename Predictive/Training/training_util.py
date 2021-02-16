@@ -38,7 +38,7 @@ def create_train_test(samples, train_ratio=0.8, given=24):
     return train_dataset, test_dataset
 
 
-def create_weights_for_dataset(dataset, num_classes=333):
+def create_weights_for_dataset(dataset, num_classes=240):
     # Weight is inversely proportional to commonality, in an attempt to normalize
     # the ratio of samples in the dataset.
     labels = dataset.ys

@@ -12,12 +12,12 @@ class InformedTestModel(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.embedding = OneHotEmbedding(333)
-        # self.embedding = nn.Embedding(333, 333)
-        self.local_attn = LocalRelativeMultiheadAttention(embed_dim=333, key_dim=256, look_back=64, look_forward=64, value_dim=512)
-        self.attn = InformedPredictiveAttention(512, 256, 333, 8, 128)
-        # self.linear = nn.Linear(512, 333)
-        self.norm1 = nn.LayerNorm(333)
+        self.embedding = OneHotEmbedding(240)
+        # self.embedding = nn.Embedding(240, 240)
+        self.local_attn = LocalRelativeMultiheadAttention(embed_dim=240, key_dim=256, look_back=64, look_forward=64, value_dim=512)
+        self.attn = InformedPredictiveAttention(512, 256, 240, 8, 128)
+        # self.linear = nn.Linear(512, 240)
+        self.norm1 = nn.LayerNorm(240)
 
     def forward(self, xs):
         xs = self.embedding(xs)

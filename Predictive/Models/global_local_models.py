@@ -21,11 +21,11 @@ class StackedModel(nn.Module):
         self.use_onehot = use_onehot_embed
 
         if use_onehot_embed:
-            embedding_dim = 333
-            self.embedding_dim = 333
-            self.embedding = OneHotEmbedding(num_embeddings=333)
+            embedding_dim = 240
+            self.embedding_dim = 240
+            self.embedding = OneHotEmbedding(num_embeddings=240)
         else:
-            self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
+            self.embedding = nn.Embedding(num_embeddings=240, embedding_dim=embedding_dim)
 
         self.local_attn_block = LocalRelativeAttentionBlock(embedding_dim=embedding_dim, key_dim=key_dim,
                                                             value_dim=value_dim, n_heads=n_heads,
@@ -39,7 +39,7 @@ class StackedModel(nn.Module):
                                                                      value_dim=value_dim, n_heads=n_heads,
                                                                      relative_cutoff=relative_cutoff)
 
-        self.linear = nn.Linear(embedding_dim, 333)
+        self.linear = nn.Linear(embedding_dim, 240)
 
     def forward(self, xs):
         xs = self.embedding(xs)
@@ -64,10 +64,10 @@ class ParallelModel(nn.Module):
         self.use_onehot = use_onehot_embed
 
         if use_onehot_embed:
-            embedding_dim = 333
-            self.embedding = OneHotEmbedding(num_embeddings=333)
+            embedding_dim = 240
+            self.embedding = OneHotEmbedding(num_embeddings=240)
         else:
-            self.embedding = nn.Embedding(num_embeddings=333, embedding_dim=embedding_dim)
+            self.embedding = nn.Embedding(num_embeddings=240, embedding_dim=embedding_dim)
 
         self.local_attn_block = LocalRelativeAttentionBlock(embedding_dim=embedding_dim, key_dim=key_dim,
                                                             value_dim=value_dim, n_heads=n_heads,
@@ -81,7 +81,7 @@ class ParallelModel(nn.Module):
                                                                      value_dim=value_dim, n_heads=n_heads,
                                                                      relative_cutoff=relative_cutoff)
 
-        self.linear = nn.Linear(embedding_dim, 333)
+        self.linear = nn.Linear(embedding_dim, 240)
 
     def forward(self, xs):
         xs = self.embedding(xs)
@@ -95,6 +95,6 @@ class ParallelModel(nn.Module):
 
 if __name__ == '__main__':
     m = ParallelModel()
-    test_input = torch.randint(0, high=333, size=(4, 8))
+    test_input = torch.randint(0, high=240, size=(4, 8))
     test_output = m(test_input)
     print(test_output.shape)

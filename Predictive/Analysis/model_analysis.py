@@ -9,6 +9,7 @@ import Predictive.Training.training_util as training_util
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+NUM_EVENTS = 240
 
 
 def make_predictions(model, data):
@@ -25,7 +26,7 @@ def make_predictions(model, data):
     return torch.tensor(results)
 
 
-def confusion_matrix(y_pred, y_star, num_classes=333):
+def confusion_matrix(y_pred, y_star, num_classes=NUM_EVENTS):
     matrix = np.zeros((num_classes, num_classes))
 
     for real, pred in zip(y_star, y_pred):
@@ -46,8 +47,8 @@ def f1_score(y_pred, y_star):
     matrix = confusion_matrix(y_pred, y_star)
 
     true_positives = np.diag(matrix)
-    false_positives = np.array([np.sum([matrix[i, j] for i in range(333) if i != j]) for j in range(333)])
-    false_negatives = np.array([np.sum([matrix[i, j] for j in range(333) if i != j]) for i in range(333)])
+    false_positives = np.array([np.sum([matrix[i, j] for i in range(NUM_EVENTS) if i != j]) for j in range(NUM_EVENTS)])
+    false_negatives = np.array([np.sum([matrix[i, j] for j in range(NUM_EVENTS) if i != j]) for i in range(NUM_EVENTS)])
 
     f1 = [true_positives[i] / (true_positives[i] + .5*(false_negatives[i] + false_positives[i]))
           for i in range(len(true_positives))

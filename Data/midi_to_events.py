@@ -42,8 +42,9 @@ def piano_roll_to_events(piano_roll):
 
         timestep_counter += 1
 
-        # The maximum length time step is 1 second, so we need to consider that and break the gap into multiple events.
-        if timestep_counter == 125:
+        # The maximum length time step is .248 second,
+        # so we need to consider that and break the gap into multiple events.
+        if timestep_counter == 32:
             events.append(_event_to_number(TIME_STEP, timestep_counter))
             timestep_counter = 0
 
@@ -58,14 +59,14 @@ def _event_to_number(event_type, arg):
     elif event_type == TIME_STEP:
         return arg + 176 - 1
     elif event_type == VELOCITY:
-        return arg + 301
+        return arg + 208
 
 
 def read_midi(midi_file, segment_length=30, sample_size=None):
     print(midi_file)
     segment_resolution = int(segment_length * 125)
     midi = PrettyMIDI(midi_file)
-    piano_roll = midi.get_piano_roll(125)
+    piano_roll = midi.get_piano_roll(fs=125)
     # Restrict piano roll to the actual notes on the piano
     piano_roll = piano_roll[21:109, :]
     roll_segments = [piano_roll[:, x:x+segment_resolution]

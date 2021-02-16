@@ -3,7 +3,7 @@ import torch.nn.functional as func
 
 
 class PredictiveLSTM(nn.Module):
-    def __init__(self, events_length=333, embed_dim=64, hidden_size=512):
+    def __init__(self, events_length=240, embed_dim=64, hidden_size=512):
         super(PredictiveLSTM, self).__init__()
 
         self.embedding = nn.Embedding(events_length, embed_dim)
