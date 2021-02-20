@@ -57,11 +57,11 @@ def f1_score(y_pred, y_star):
 
 
 if __name__ == '__main__':
-    model_to_test = "onehot-localattn-relu-pred-k256-v512.model"
+    model_to_test = "240_onehot_globalattn_infpred_k128_v512.model.model"
     model = persistence.unpickle_model(model_to_test).to(DEVICE)
 
     given_elems = 500
-    _, test_dataset = training_util.create_train_test(event_loader.load_dataset(event_loader.MAESTRO_EVENTS_MEDIUM), given=given_elems)
+    _, test_dataset = training_util.create_train_test(event_loader.load_dataset(event_loader.MAESTRO_EVENTS_2017_240), given=given_elems)
 
     predictions = make_predictions(model, test_dataset)
 
