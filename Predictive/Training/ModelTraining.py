@@ -10,13 +10,15 @@ from Predictive.Models.predictive_lstm import PredictiveLSTM
 from Predictive.Models.predictive_relative_attention_model import PRAm
 from Predictive.Models import model_persistence
 from Predictive.Models.global_local_models import StackedModel, ParallelModel
-from Predictive.Models.test_models import InformedTestModel
+import Predictive.Models.test_models as test_models
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, train_ratio=0.8):
+def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=8, train_ratio=0.8):
+    model.train()
+
     train_dataset, test_dataset = training_util.create_train_test(samples, train_ratio, given)
     y_weights = training_util.create_weights_for_dataset(train_dataset)
     sampler = WeightedRandomSampler(y_weights, len(y_weights))
@@ -50,6 +52,7 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, t
     print()
 
     # Calculate accuracy over test data
+    model.eval()
     test_acc_sum = 0
     test_batches = ceil(len(test_dataset) // batch_size)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=workers, pin_memory=True)
@@ -64,7 +67,7 @@ def train_model(model, samples, epochs=10, batch_size=32, given=16, workers=3, t
 
 
 if __name__ == '__main__':
-    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_MEDIUM)
+    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_2017_240)
 
     model_to_load = None
 
@@ -85,11 +88,12 @@ if __name__ == '__main__':
         # # net = PRAm(key_dim=k_d, value_dim=v_d, embedding_dim=e_d, num_attn_layers=attn_layers, relative_cutoff=r_d)
         # net = StackedModel(embedding_dim=e_d, key_dim=k_d, value_dim=v_d, relative_cutoff=r_d, n_heads=n_heads,
         #                    use_onehot_embed=use_onehot_embed, local_range=local_range)
-        net = InformedTestModel()
+        # net = test_models.InformedTestModel()
+        net = test_models.generate_sequential_model()
 
     save_model = False      # Whether or not to save the model after training
-    pickle_model = True     # Whether or not to pickle model after training
-    pickle_model_name = "onehot-localattn-relu-pred-relu-linear-k256-v512"
+    pickle_model = False     # Whether or not to pickle model after training
+    pickle_model_name = ""
 
     net = net.to(device)
     train_model(net, data, batch_size=16, given=500, epochs=5)
