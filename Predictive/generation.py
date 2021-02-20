@@ -15,7 +15,7 @@ from Predictive.Models import model_persistence
 all_events = list(range(240))
 
 
-def generate_sequence(model, stubs, generation_length, stochastic=False, temperature=1.0):
+def generate_sequence(model, stubs, generation_length, stochastic=False, temperature=1.0, topk=8):
     """model is a generative model. stubs is a 2d tensor of shape (batch, seq)
     It is permitted for stubs to be "empty": however since the model needs something to work off of
     a single velocity/timestep event should be present (as neither of these introduce any real notes
@@ -33,11 +33,13 @@ def generate_sequence(model, stubs, generation_length, stochastic=False, tempera
             predictions *= temperature
             predictions = torch.softmax(predictions, dim=1)
 
+            top_indexes, weights = torch.topk(predictions, topk, dim=1)
+
             # Convert probabilities to a python list so we can do weighted random choices
-            probs = predictions.cpu().detach().numpy().tolist()
+            # probs = predictions.cpu().detach().numpy().tolist()
 
             # Randomly sample over each probability-space list
-            choices = [random.choices(population=all_events, weights=probs[i], k=1) for i in range(len(probs))]
+            choices = [random.choices(population=top_indexes[i], weights=weights[i], k=1) for i in range(len(top_indexes))]
 
             # Recombine choices into a tensor of shape (batch)
             continuation = torch.tensor(choices).to(stubs.device)
