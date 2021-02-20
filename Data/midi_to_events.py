@@ -52,14 +52,20 @@ def piano_roll_to_events(piano_roll):
 
 
 def _event_to_number(event_type, arg):
+    result = 0
     if event_type == NOTE_ON:
-        return arg
+        result = arg
     elif event_type == NOTE_OFF:
-        return arg + 88
+        result = arg + 88
     elif event_type == TIME_STEP:
-        return arg + 176 - 1
+        result = arg + 176 - 1
     elif event_type == VELOCITY:
-        return arg + 208
+        result = min(arg + 208, 239)
+
+    if result >= 240:
+        print(f"invalid event generated: {event_type}, {arg}")
+
+    return result
 
 
 def read_midi(midi_file, segment_length=30, sample_size=None):
