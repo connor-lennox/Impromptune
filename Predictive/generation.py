@@ -33,13 +33,13 @@ def generate_sequence(model, stubs, generation_length, stochastic=False, tempera
             predictions *= temperature
             predictions = torch.softmax(predictions, dim=1)
 
-            top_indexes, weights = torch.topk(predictions, topk, dim=1)
+            weights, top_indices = torch.topk(predictions, topk, dim=1)
 
             # Convert probabilities to a python list so we can do weighted random choices
             # probs = predictions.cpu().detach().numpy().tolist()
 
             # Randomly sample over each probability-space list
-            choices = [random.choices(population=top_indexes[i], weights=weights[i], k=1) for i in range(len(top_indexes))]
+            choices = [random.choices(population=top_indices[i], weights=weights[i], k=1) for i in range(len(top_indices))]
 
             # Recombine choices into a tensor of shape (batch)
             continuation = torch.tensor(choices).to(stubs.device)
@@ -152,23 +152,23 @@ if __name__ == '__main__':
     GIVEN_EVENTS = 256
 
     # Load dataset
-    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_MEDIUM)
+    data = event_loader.load_dataset(event_loader.MAESTRO_EVENTS_2017_240)
     train_data, test_data = training_util.create_train_test(data, given=GIVEN_EVENTS)
 
     # Retrieve stubs from the test dataset
-    # test_stubs = torch.vstack([test_data[0][0], test_data[4000][0], test_data[8000][0], test_data[12000][0]]).to(device)
-    test_stubs = torch.vstack([test_data[4000][0]]).to(device)
+    test_stubs = torch.vstack([test_data[0][0], test_data[4000][0], test_data[8000][0], test_data[12000][0]]).to(device)
+    # test_stubs = torch.vstack([test_data[4000][0]]).to(device)
     # test_stubs = torch.tensor([[332]]).to(device)
 
     # Load in model
-    model_to_load = "onehot-localattn-relu-pred-k256-v512.model"
+    model_to_load = "240_onehot_globalattn_infpred_k128_v512.model.model"
     # generator_model = model_persistence.load_model(model_to_load).to(device)
     generator_model = model_persistence.unpickle_model(model_to_load).to(device)
 
     # Generate sequences
     test_generated_seqs = generate_sequence(generator_model, test_stubs, 1100, stochastic=False, temperature=1.0).cpu()
 
-    # If debugging, draw some plots of generated events and
+    # If debugging, draw some plots of generated event sequence and histogram of event frequency
     if DEBUG:
         first_seq = test_generated_seqs[0, GIVEN_EVENTS:].detach().numpy()
 
