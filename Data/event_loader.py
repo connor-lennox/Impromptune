@@ -19,6 +19,7 @@ MAESTRO_EVENTS_FULL = "maestro-events-full.pkl"
 # 240-Event Datasets
 MAESTRO_EVENTS_MEDIUM_240 = "maestro-events-medium-240.pkl"
 MAESTRO_EVENTS_2017_240 = "maestro-events-2017-240.pkl"
+MAESTRO_EVENTS_FULL_240 = "maestro-events-full-240.pkl"
 
 
 def find_maestro_midis(files_root=maestro_root):
@@ -51,5 +52,5 @@ if __name__ == '__main__':
     # pickle_data("maestro-events-medium-240.pkl", test_samples)
 
     # Generate 2017 dataset
-    samples = sample_from_maestro(maestro_root + "/2017", songs_to_sample=None, samples_per_song=None)
-    pickle_data("maestro-events-2017-240.pkl", samples)
+    samples = sample_from_maestro(maestro_root, songs_to_sample=None, samples_per_song=None)
+    pickle_data("maestro-events-full-240.pkl", samples)
