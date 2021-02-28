@@ -380,7 +380,6 @@ class InformedPredictiveAttention(nn.Module):
         seq_len = xs.shape[1]
 
         # Combine all values by learned weights
-        # TODO: Check if the softmax is really necessary here
         w = F.softmax(self._generate_sequence_weights(self.a_w, seq_len), dim=0)
         result = torch.einsum("bsv,s->bv", xs, w)
 
@@ -388,6 +387,50 @@ class InformedPredictiveAttention(nn.Module):
         return result
 
     def _generate_sequence_weights(self, weights_vector, seq_len):
+        pos_vec = torch.flip(torch.arange(0, seq_len), [0])
+        pos_vec = torch.clamp(pos_vec, 0, self.relative_cutoff)
+        return weights_vector[pos_vec]
+
+
+class MultiDirectionalInformedPrediction(nn.Module):
+    def __init__(self, embed_dim, key_dim=64, value_dim=64, n_heads=8, relative_cutoff=128):
+        super().__init__()
+
+        self.relative_cutoff = relative_cutoff
+
+        self.rel_attn = EfficientRelativeMultiheadAttention(embed_dim, key_dim, value_dim, n_heads, relative_cutoff)
+
+        # Relative parameters for informed weighting
+        self.a_wf = nn.Parameter(torch.Tensor(relative_cutoff+1))
+        self.a_wb = nn.Parameter(torch.Tensor(relative_cutoff+1))
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        init.ones_(self.a_wf)
+        init.ones_(self.a_wb)
+
+    def forward(self, xs):
+        # Input xs: (batch, seq_length, embed_dim)
+        # Run elements through relative attention
+        xs = self.rel_attn(xs)      # (batch, seq_len, value_dim)
+
+        seq_len = xs.shape[1]
+
+        # Combine all values by learned weights
+        w = F.softmax(self._generate_forward_weights(self.a_wf, seq_len) +
+                      self._generate_backward_weights(self.a_wb, seq_len), dim=0)
+        result = torch.einsum("bsv,s->bv", xs, w)
+
+        # Final output shape: (batch, value_dim)
+        return result
+
+    def _generate_forward_weights(self, weights_vector, seq_len):
+        pos_vec = torch.arange(0, seq_len)
+        pos_vec = torch.clamp(pos_vec, 0, self.relative_cutoff)
+        return weights_vector[pos_vec]
+
+    def _generate_backward_weights(self, weights_vector, seq_len):
         pos_vec = torch.flip(torch.arange(0, seq_len), [0])
         pos_vec = torch.clamp(pos_vec, 0, self.relative_cutoff)
         return weights_vector[pos_vec]
