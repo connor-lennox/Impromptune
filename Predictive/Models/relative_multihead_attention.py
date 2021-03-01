@@ -436,6 +436,79 @@ class MultiDirectionalInformedPrediction(nn.Module):
         return weights_vector[pos_vec]
 
 
+class LookbackQueryPrediction(nn.Module):
+    def __init__(self, embed_dim, key_dim=64, value_dim=64, n_heads=8, relative_cutoff=128, lookback_length=8):
+        super().__init__()
+
+        self.relative_cutoff = relative_cutoff
+        self.value_dim = value_dim
+        self.lookback_length = lookback_length
+
+        # Typical multi-head attention parameters
+        self.w_q = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
+        self.w_k = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
+        self.w_v = nn.Parameter(torch.Tensor(n_heads, embed_dim, value_dim))
+        self.w_o = nn.Parameter(torch.Tensor(n_heads))
+
+        # Relative positional values go only backwards now
+        self.a_q = nn.Parameter(torch.Tensor(n_heads, embed_dim, key_dim))
+        self.a_k = nn.Parameter(torch.Tensor(relative_cutoff+1, key_dim))
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        init.kaiming_uniform_(self.w_q, a=sqrt(5))
+        init.kaiming_uniform_(self.w_k, a=sqrt(5))
+        init.kaiming_uniform_(self.w_v, a=sqrt(5))
+        init.ones_(self.w_o)
+
+        init.kaiming_uniform_(self.a_q, a=sqrt(5))
+        init.kaiming_uniform_(self.a_k, a=sqrt(5))
+
+    def forward(self, xs):
+        """xs of shape (batch, seq_len, embed_dim)"""
+
+        seq_len = xs.shape[1]
+
+        # Average the query of the last few elements
+        query = torch.einsum('bse,heq->bhsq', xs[:, -self.lookback_length:, :], self.w_q)
+        query = torch.mean(query, dim=2)
+        positional_query = torch.einsum('be,heq->bhq', xs[:, -1, :], self.a_q)
+
+        # Keys and values still calculated for every element:
+        keys = torch.einsum('bse,hek->bhsk', xs, self.w_k)
+        values = torch.einsum('bse,hev->bhsv', xs, self.w_v)
+
+        # Query x keys
+        q_k = torch.einsum('bhq,bhsq->bhs', query, keys)
+
+        # Query x rel. key encoding
+        q_rel = torch.einsum('bhq,sq->bhs',
+                             positional_query, self._generate_relative_positional_embeddings(self.a_k, seq_len))
+
+        # Shape of e: (batch, head, seq_len)
+        e = (q_k + q_rel) / sqrt(self.value_dim)
+        alphas = F.softmax(e, dim=2)
+
+        # Application of alphas to values, summed over j axis
+        qkv = torch.einsum('bhs,bhsv->bhv', alphas, values)
+
+        # z of shape (batch, n_heads, value_dim)
+        z = qkv
+
+        # Combine heads with w_o weight vector
+        result = torch.einsum('bhv,h->bv', z, self.w_o)
+
+        # Final output shape: (batch, value_dim)
+        return result
+
+    def _generate_relative_positional_embeddings(self, embeddings_matrix, seq_len):
+        """Generates in O(LD) memory space, since only the last element of the sequence is being queried """
+        pos_vec = torch.flip(torch.arange(0, seq_len), [0])
+        pos_vec = torch.clamp(pos_vec, 0, self.relative_cutoff)
+        return embeddings_matrix[pos_vec]
+
+
 if __name__ == '__main__':
     # # parameter of (embed)
     # test_att = PredictiveRelativeMultiheadAttention(128, value_dim=128)
@@ -459,6 +532,6 @@ if __name__ == '__main__':
     test_input = torch.randn(8, 9, 3)
     # test_output = test_local_attn(test_input)
     # print(test_output.shape)
-    test_pred = InformedPredictiveAttention(3, key_dim=4, value_dim=4, n_heads=8, relative_cutoff=4)
+    test_pred = LookbackQueryPrediction(3, key_dim=4, value_dim=4, n_heads=8, relative_cutoff=4, lookback_length=2)
     test_output = test_pred(test_input)
     print(test_output.shape)
